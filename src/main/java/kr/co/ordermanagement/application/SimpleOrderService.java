@@ -2,6 +2,8 @@ package kr.co.ordermanagement.application;
 
 import kr.co.ordermanagement.domain.order.Order;
 import kr.co.ordermanagement.domain.order.OrderRepository;
+import kr.co.ordermanagement.domain.order.OrderedProduct;
+import kr.co.ordermanagement.domain.order.State;
 import kr.co.ordermanagement.domain.product.Product;
 import kr.co.ordermanagement.domain.product.ProductRepository;
 import kr.co.ordermanagement.presentation.dto.request.ChangeStateRequestDto;
@@ -35,7 +37,7 @@ public class SimpleOrderService {
         }
 
         // 1 requestDto 의 상품 번호(id) 에 해당하는 상품이 주문 수량만큼 재고가 있는지 확인
-        List<Product> products = makeOrderedProducts(requests);
+        List<OrderedProduct> products = makeOrderedProducts(requests);
         // 2. 재고 있다면 해당 상품의 재고 수량만큼 차감
         decreaseProductAmount(products);
 
@@ -60,7 +62,7 @@ public class SimpleOrderService {
     // 주문 상태 강제 변경
 
     // 주문 생성 메서드
-    private List<Product> makeOrderedProducts(List<OrderProductRequestDto> requestDtos){
+    private List<OrderedProduct> makeOrderedProducts(List<OrderProductRequestDto> requestDtos){
         log.info("\t makeOrderedProducts() called.......");
         return requestDtos.stream().map(requestDto -> {
             Long productId = requestDto.getId();
@@ -70,7 +72,7 @@ public class SimpleOrderService {
             log.info("findProductAmount = {}", findProductAmount);
             findProduct.checkEnoughAmount(requestDto.getAmount());
 
-            return Product.builder()
+            return OrderedProduct.builder()
                     .id(productId)
                     .name(findProduct.getName())
                     .price(findProduct.getPrice())
@@ -81,7 +83,7 @@ public class SimpleOrderService {
     }
 
     // 주문 수량 차감 메서드
-    private void decreaseProductAmount(List<Product> orderedProducts){
+    private void decreaseProductAmount(List<OrderedProduct> orderedProducts){
         orderedProducts.stream().forEach(orderedProduct -> {
             Long productId = orderedProduct.getId();
             Product findProduct = productRepository.findById(productId);
@@ -97,13 +99,33 @@ public class SimpleOrderService {
     public OrderResponseDto changeState(Long orderId, ChangeStateRequestDto request) {
 
         Order findOrder = orderRepository.findById(orderId);
-        String state = request.getState();
+        State state = request.getState();
 
         findOrder.changeState(state);
 //        orderRepository.update(findOrder);
 
         OrderResponseDto responseDto = OrderResponseDto.toDto(findOrder);
         return responseDto;
+
+    }
+
+    public List<OrderResponseDto> findByState(State state) {
+
+        List<Order> findOrders = orderRepository.findByState(state);
+
+        List<OrderResponseDto> orderResponseDtos = findOrders.stream().map(
+                order -> OrderResponseDto.toDto(order)
+        ).toList();
+
+        return orderResponseDtos;
+    }
+
+    public OrderResponseDto cancelOrderById(Long orderId) {
+        Order findOrder = orderRepository.findById(orderId);
+        findOrder.cancel();
+
+        OrderResponseDto orderResponseDto = OrderResponseDto.toDto(findOrder);
+        return orderResponseDto;
 
     }
 }

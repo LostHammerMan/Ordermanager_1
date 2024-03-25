@@ -1,7 +1,9 @@
 package kr.co.ordermanagement.presentation.dto.response;
 
 import kr.co.ordermanagement.domain.order.Order;
+import kr.co.ordermanagement.domain.order.State;
 import kr.co.ordermanagement.domain.product.Product;
+import kr.co.ordermanagement.presentation.dto.OrderedProductDto;
 import kr.co.ordermanagement.presentation.dto.ProductDto;
 import lombok.Builder;
 import lombok.Getter;
@@ -16,12 +18,12 @@ import java.util.List;
 public class OrderResponseDto {
 
     private Long id;
-    private List<ProductDto> orderProducts;
+    private List<OrderedProductDto> orderProducts;
     private Integer totalPrice;
-    private String state;
+    private State state;
 
     @Builder
-    public OrderResponseDto(Long id, List<ProductDto> orderProducts, Integer totalPrice, String state) {
+    public OrderResponseDto(Long id, List<OrderedProductDto> orderProducts, Integer totalPrice, State state) {
         this.id = id;
         this.orderProducts = orderProducts;
         this.totalPrice = totalPrice;
@@ -30,13 +32,13 @@ public class OrderResponseDto {
 
     // order -> responseDto
     public static OrderResponseDto toDto(Order order){
-        List<ProductDto> orderedProductDtos = order.getOrderedProducts()
+        List<OrderedProductDto> orderedProductDtos = order.getOrderedProducts()
                 .stream().map(orderedProduct ->
-                        ProductDto.toDto(orderedProduct)
+                        OrderedProductDto.toDto(orderedProduct)
 
                 ).toList();
 
-        for(ProductDto dtos : orderedProductDtos){
+        for(OrderedProductDto dtos : orderedProductDtos){
             log.info("dtos.getAmount() = {}", dtos.getAmount());
             log.info("dtos.getPrice() = {}", dtos.getPrice());
         }

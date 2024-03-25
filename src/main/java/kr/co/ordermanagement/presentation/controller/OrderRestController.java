@@ -1,6 +1,9 @@
 package kr.co.ordermanagement.presentation.controller;
 
 import kr.co.ordermanagement.application.SimpleOrderService;
+import kr.co.ordermanagement.domain.exception.OrderStateNotFoundException;
+import kr.co.ordermanagement.domain.order.Order;
+import kr.co.ordermanagement.domain.order.State;
 import kr.co.ordermanagement.presentation.dto.request.ChangeStateRequestDto;
 import kr.co.ordermanagement.presentation.dto.request.OrderProductRequestDto;
 import kr.co.ordermanagement.presentation.dto.response.OrderResponseDto;
@@ -36,11 +39,36 @@ public class OrderRestController {
 
     }
 
-    // 주문 강제 변경
+    // 주문 상태 강제 변경
     @PatchMapping("/{orderId}")
     public ResponseEntity<OrderResponseDto> changeOrderState(
             @PathVariable Long orderId, @RequestBody ChangeStateRequestDto request){
-        OrderResponseDto responseDto = simpleOrderService.changeState(orderId, request);
-        return ResponseEntity.ok(responseDto);
+
+        if (request.getState().equals("CREATED") ||
+                request.getState().equals("SHIPPING") ||
+                request.getState().equals("COMPLETED") ||
+                request.getState().equals("CANCELED")){
+            OrderResponseDto responseDto = simpleOrderService.changeState(orderId, request);
+            return ResponseEntity.ok(responseDto);
+
+        }else {
+            throw new OrderStateNotFoundException();
+        }
+    }
+
+    // 주문 상태로 조회
+    @GetMapping("")
+    public ResponseEntity<List<OrderResponseDto>> getOrderByState(@RequestParam State state){
+        List<OrderResponseDto> orderResponseDtos = simpleOrderService.findByState(state);
+
+        return ResponseEntity.ok(orderResponseDtos);
+    }
+
+    // 주문 취소 api
+    @PatchMapping("/{orderId}/cancel")
+    public ResponseEntity<OrderResponseDto> cancelOrderById(@PathVariable Long orderId){
+        OrderResponseDto orderResponseDto = simpleOrderService.cancelOrderById(orderId);
+        return ResponseEntity.ok(orderResponseDto);
+
     }
 }

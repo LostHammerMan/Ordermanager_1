@@ -1,5 +1,6 @@
 package kr.co.ordermanagement.domain.order;
 
+import kr.co.ordermanagement.domain.exception.CancellableStateException;
 import kr.co.ordermanagement.domain.product.Product;
 import lombok.Builder;
 import lombok.Getter;
@@ -13,18 +14,19 @@ public class Order {
 
     private Long id;
 
-    private List<Product> orderedProducts;
+//    private List<Product> orderedProducts;
+    private List<OrderedProduct> orderedProducts;
     private Integer totalPrice;
-    private String state;
+    private State state;
 
     @Builder
-    public Order(List<Product> orderedProducts) {
+    public Order(List<OrderedProduct> orderedProducts) {
         this.orderedProducts = orderedProducts;
         this.totalPrice = calculateTotalPrice(orderedProducts);
-        this.state = "CREATED";
+        this.state = State.CREATED;
     }
 
-    private Integer calculateTotalPrice(List<Product> orderedProducts) {
+    private Integer calculateTotalPrice(List<OrderedProduct> orderedProducts) {
         return orderedProducts.stream().mapToInt(
                 orderProduct ->
                     orderProduct.getPrice() * orderProduct.getAmount()
@@ -39,7 +41,20 @@ public class Order {
         return this.id.equals(id);
     }
 
-    public void changeState(String state) {
+    public void changeState(State state) {
         this.state = state;
+    }
+
+    public boolean sameState(State state) {
+        return this.state.equals(state);
+    }
+
+    public void cancel() {
+
+//        if (!this.state.equals(State.CREATED)){
+//            throw new CancellableStateException();
+//        }
+        this.state.checkCancellable();
+        this.state = State.CANCELED;
     }
 }
